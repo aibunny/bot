@@ -1,0 +1,2 @@
+DATABASE_URL=postgresql+psycopg2://postgres:ONGHdM1QqbpnNJjh@db.kmxxsrztugqyygjvsjpk.supaba5432/postgres
+OPENAI_API_KEY=sk-BifjDj8EeABn51mCwE2wT3BlbkFJ4byP7rJ7
