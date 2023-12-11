@@ -60,4 +60,4 @@ async def read_root(request: Request):
 async def stream_chat(message: Message):
     result = agent_executor.run(message.content)
     result = f"**{result}**"
-    return result
+    return result.strip('""')
