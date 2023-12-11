@@ -1,0 +1,96 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@3.0.0/marked.min.js"></script>
+</head>
+
+<body class="font-sans bg-gray-900 m-0 p-0 h-screen flex flex-col justify-center items-center">
+
+    <div id="chat-container" class="w-full sm:w-96 md:w-lg lg:w-1/2 bg-gray-800 rounded overflow-hidden shadow-md text-white">
+        <div class="max-h-64 overflow-y-auto p-4"> Ask me anything about Microsoft Northwind database</div>
+        <div id="chat-messages" class="max-h-64 overflow-y-auto p-4"></div>
+
+        <div id="user-input" class="flex items-center p-4 border-t border-gray-600">
+            <input type="text" id="user-input-text" placeholder="Type your message..."
+                class="flex-grow p-2 border-none rounded-l outline-none bg-gray-600 text-white">
+            <button id="send-button"
+                class="bg-green-500 text-white border-none p-2 rounded-r cursor-pointer"
+                onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInputText = document.getElementById('user-input-text');
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', 'mb-2', 'max-w-2/3', 'rounded-lg', 'overflow-hidden');
+            const messageClasses = `text-xs p-2 ${sender === 'user' ? 'bg-gray-600' : 'bg-black'} ${sender === 'user' ? 'text-white' : 'text-white'}`;
+            const markdownClasses = sender === 'bot' ? 'markdown' : '';
+
+            // Use marked.js to render Markdown to HTML
+            const htmlMessage = marked(message);
+            
+            messageElement.innerHTML = `<div class="${messageClasses} ${markdownClasses}">${htmlMessage}</div>`;
+            chatMessages.appendChild(messageElement);
+
+            // Scroll to the bottoms of the chat messages
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInputText.value.trim();
+            if (message !== '') {
+                appendMessage('user', message);
+
+                // Replace the following fetch URL with your actual endpoint
+                const response = await fetch('http://localhost:8000/stream_chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: message })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+
+                async function processResult() {
+                    const result = await reader.read();
+                    if (result.done) return;
+                    let token = decoder.decode(result.value);
+                    if (token.endsWith('.') || token.endsWith('!') || token.endsWith('?')) {
+                        appendMessage('bot', token);
+                    } else {
+                        appendMessage('bot', token + ' ');
+                    }
+                    await processResult();
+                }
+
+                await processResult();
+
+                userInputText.value = '';
+            }
+        }
+
+        // Listen for the "Enter" key press event on the input field
+        userInputText.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent the default behavior (e.g., form submission)
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+
+</html>
