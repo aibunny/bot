@@ -5,12 +5,13 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
 from langchain.agents import create_sql_agent
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit
 from langchain.agents.agent_types import AgentType
 from langchain.llms.openai import OpenAI
 from langchain.sql_database import SQLDatabase
+
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -59,5 +60,4 @@ async def read_root(request: Request):
 @app.post("/stream_chat/")
 async def stream_chat(message: Message):
     result = agent_executor.run(message.content)
-    result = f"**{result}**"
-    return result.strip('""')
+    return result
