@@ -39,7 +39,7 @@
 
             // Use marked.js to render Markdown to HTML
             const htmlMessage = marked(message);
-            
+
             messageElement.innerHTML = `<div class="${messageClasses} ${markdownClasses}">${htmlMessage}</div>`;
             chatMessages.appendChild(messageElement);
 
@@ -53,7 +53,7 @@
                 appendMessage('user', message);
 
                 // Replace the following fetch URL with your actual endpoint
-                const response = await fetch('http://65.0.92.54:2000/stream_chat/', {
+                const response = await fetch('http://127.0.0.1:8000/stream_chat/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -61,22 +61,9 @@
                     body: JSON.stringify({ content: message })
                 });
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
+                const result = await response.json();
 
-                async function processResult() {
-                    const result = await reader.read();
-                    if (result.done) return;
-                    let token = decoder.decode(result.value);
-                    if (token.endsWith('.') || token.endsWith('!') || token.endsWith('?')) {
-                        appendMessage('bot', token);
-                    } else {
-                        appendMessage('bot', token + ' ');
-                    }
-                    await processResult();
-                }
-
-                await processResult();
+                appendMessage('bot', result.content);
 
                 userInputText.value = '';
             }
