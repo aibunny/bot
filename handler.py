@@ -30,10 +30,13 @@ def get_llm():
 
 def execute_prompt(question):
     PROMPT = """ 
-    Given an input question, first create a syntactically correct SQL query to run, 
-    Ensure the SQL query is correct and it matches the table names to avoid any errors before running. 
-    then look at the results of the query and return the answer in markdown format.If user requests explicitly requires
-    data in table format generate a markdown table with the data.   
+    Given an input question, first look at the database then create a syntactically correct SQL query to run, 
+    Ensure the SQL query is correct and it matches the table names in the Microsoft Northwind database to avoid any errors before running. 
+    then look at the results of the query and return the answer in markdown format.If question requests explicitly requires
+    data in table format generate a markdown table with the data.  
+    Only use factual information from the Northwind database to answer the question if the question is not related to
+    Microsoft Northwind Database reply with "NOT RELATED"
+    NOTE: ALWAYS ENSURE SQL QUERY IS CORRECT. 
     
     The question: {question}
     """
