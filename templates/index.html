@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,25 +8,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@3.0.0/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@12.0.3/dist/markdown-it.min.js"></script>
 </head>
 
 <body class="font-sans bg-gray-900 m-0 p-0 h-screen flex flex-col justify-center items-center">
 
     <div id="chat-container" class="w-full sm:w-96 md:w-lg lg:w-1/2 bg-gray-800 rounded overflow-hidden shadow-md text-white">
-        <div class="max-h-64 overflow-y-auto p-4"> Ask me anything about Microsoft Northwind database</div>
+        <div class="max-h-64 overflow-y-auto p-4">Ask me anything about Microsoft Northwind database</div>
         <div id="chat-messages" class="max-h-64 overflow-y-auto p-4"></div>
 
         <div id="user-input" class="flex items-center p-4 border-t border-gray-600">
             <input type="text" id="user-input-text" placeholder="Type your message..."
                 class="flex-grow p-2 border-none rounded-l outline-none bg-gray-600 text-white">
-            <button id="send-button"
-                class="bg-green-500 text-white border-none p-2 rounded-r cursor-pointer"
+            <button id="send-button" class="bg-green-500 text-white border-none p-2 rounded-r cursor-pointer"
                 onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
     <script>
+        function convertMarkdownWithLineBreaks(markdownWithLineBreaks) { 
+            const sanitizedResponse = markdownWithLineBreaks.replace(/^"(.*)"$/, '$1');
+            return sanitizedResponse.replace(/\\n/g, '\n');
+        }
+
         const chatMessages = document.getElementById('chat-messages');
         const userInputText = document.getElementById('user-input-text');
 
@@ -37,13 +40,14 @@
             const messageClasses = `text-xs p-2 ${sender === 'user' ? 'bg-gray-600' : 'bg-black'} ${sender === 'user' ? 'text-white' : 'text-white'}`;
             const markdownClasses = sender === 'bot' ? 'markdown' : '';
 
-            // Use marked.js to render Markdown to HTML
-            const htmlMessage = marked(message);
-            
+            // Use markdown-it to render Markdown to HTML for both user and bot messages
+            const md = window.markdownit();
+            const htmlMessage = md.render(message);
             messageElement.innerHTML = `<div class="${messageClasses} ${markdownClasses}">${htmlMessage}</div>`;
+
             chatMessages.appendChild(messageElement);
 
-            // Scroll to the bottoms of the chat messages
+            // Scroll to the bottom of the chat messages
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
@@ -52,8 +56,8 @@
             if (message !== '') {
                 appendMessage('user', message);
 
-                // Replace the following fetch URL with your actual endpoint
-                const response = await fetch('https://test.theaibunny.com/stream_chat/', {
+                // Replace the following fetch URL with the actual endpoint
+                const response = await fetch('http://127.0.0.1:8000/stream_chat/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -61,24 +65,17 @@
                     body: JSON.stringify({ content: message })
                 });
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
+                try {
+                    // Assuming the response is just Markdown
+                    const botResponse = await response.text();
+                    const sanitizedResponse = convertMarkdownWithLineBreaks(botResponse);
+                    // Append the bot's response with Markdown rendering
+                    appendMessage('bot', sanitizedResponse);
 
-                async function processResult() {
-                    const result = await reader.read();
-                    if (result.done) return;
-                    let token = decoder.decode(result.value);
-                    if (token.endsWith('.') || token.endsWith('!') || token.endsWith('?')) {
-                        appendMessage('bot', token);
-                    } else {
-                        appendMessage('bot', token + ' ');
-                    }
-                    await processResult();
+                    userInputText.value = '';
+                } catch (error) {
+                    console.error('Error fetching or rendering Markdown:', error);
                 }
-
-                await processResult();
-
-                userInputText.value = '';
             }
         }
 
