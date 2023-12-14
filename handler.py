@@ -2,20 +2,30 @@ import os
 from dotenv import load_dotenv
 from langchain_experimental.sql import SQLDatabaseSequentialChain
 from langchain.utilities import SQLDatabase
-from langchain.llms import HuggingFaceHub
+from langchain.llms import HuggingFaceHub, OpenAI
 from langchain.prompts import PromptTemplate
 
 load_dotenv()
 
+DEBUG = os.getenv('DEBUG', False)
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 db = SQLDatabase.from_uri(DATABASE_URL)
 
-llm = HuggingFaceHub(
+def get_llm():
+    if DEBUG:
+        llm = HuggingFaceHub(
         repo_id="HuggingFaceH4/zephyr-7b-beta",
         model_kwargs={"max_length": 512}
         )
+    else:
+        llm=OpenAI(
+        streaming=True,
+        temperature=0
+        )
+    return llm
+        
 
 
 def execute_prompt(question):
@@ -28,7 +38,7 @@ def execute_prompt(question):
     The question: {question}
     """
 
-    db_chain = SQLDatabaseSequentialChain.from_llm(llm,db)
+    db_chain = SQLDatabaseSequentialChain.from_llm(get_llm(),db)
 
     result = db_chain.run(PROMPT.format(question=question))
     print(result)
