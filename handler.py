@@ -23,7 +23,8 @@ def execute_prompt(question):
     PROMPT = """ 
     Given an input question, first create a syntactically correct SQL query to run,  
     then look at the results of the query and return the answer in markdown format.If user requests explicitly requires
-    data in table format generate a markdown table with the data.  
+    data in table format generate a markdown table with the data.
+    If the question is not related to anything in the database respond with:"NOT RELATED"  
     The question: {question}
     """
 
