@@ -17,15 +17,13 @@ llm = HuggingFaceHub(
         model_kwargs={"max_length": 512}
         )
 
-#question =" list top 5 customers along with their total orders in table format"
 
 def execute_prompt(question):
     PROMPT = """ 
     Given an input question, first create a syntactically correct SQL query to run,  
     then look at the results of the query and return the answer in markdown format.If user requests explicitly requires
     data in table format generate a markdown table with the data.
-    Ensure the SQL query is correct and it matches the table names to avoid any errors.
-    If the question is not related to anything in the database respond with:"NOT RELATED"  
+    
     The question: {question}
     """
 
@@ -35,5 +33,3 @@ def execute_prompt(question):
     print(result)
     return result
 
-result = execute_prompt("list top 5 customers along with their total orders in table format")
-print(result)
